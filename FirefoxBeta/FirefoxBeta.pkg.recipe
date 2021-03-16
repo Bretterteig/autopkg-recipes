@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Description</key>
+    <string>Renames the Firefox.app to Firefox Beta.app and puts it back into a dmg.</string>
+    <key>Identifier</key>
+    <string>com.github.bretterteig.pkg.firefoxbeta</string>
+    <key>Input</key>
+    <dict>
+        <key>NAME</key>
+        <string>FirefoxBeta</string>
+    </dict>
+    <key>MinimumVersion</key>
+    <string>1.0.0</string>
+    <key>ParentRecipe</key>
+    <string>com.github.bretterteig.download.firefoxbeta</string>
+    <key>Process</key>
+    <array>
+        <dict>
+            <key>Processor</key>
+            <string>Copier</string>
+            <key>Arguments</key>
+            <dict>
+                <key>source_path</key>
+                <string>%pathname%/Firefox.app</string>
+                <key>destination_path</key>
+                <string>%RECIPE_CACHE_DIR%/dmg/Firefox Beta.app</string>
+                <key>overwrite</key>
+                <true/>
+            </dict>
+        </dict>
+        <dict>
+            <key>Processor</key>
+            <string>DmgCreator</string>
+            <key>Arguments</key>
+            <dict>
+                <key>dmg_root</key>
+                <string>%RECIPE_CACHE_DIR%/dmg</string>
+                <key>dmg_path</key>
+                <string>%RECIPE_CACHE_DIR%/Firefox Beta.dmg</string>
+            </dict>
+        </dict>
+    </array>
+</dict>
+</plist>
