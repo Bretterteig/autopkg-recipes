@@ -17,35 +17,13 @@
         <dict>
             <key>Arguments</key>
             <dict>
-                <key>source_path</key>
-                <string>%pathname%</string>
-                <key>destination_path</key>
-                <string>%RECIPE_CACHE_DIR%/current/Install %release%.app</string>
-            </dict>
-            <key>Processor</key>
-            <string>Copier</string>
-        </dict>
-        <dict>
-            <key>Arguments</key>
-            <dict>
                 <key>dmg_root</key>
-                <string>%RECIPE_CACHE_DIR%/current/</string>
+                <string>%cache_dir%</string>
                 <key>dmg_path</key>
                 <string>%RECIPE_CACHE_DIR%/%release%-%version%.dmg</string>
             </dict>
             <key>Processor</key>
             <string>DmgCreator</string>
-        </dict>
-        <dict>
-            <key>Arguments</key>
-            <dict>
-                <key>path_list</key>
-                <array>
-                    <string>%RECIPE_CACHE_DIR%/current</string>
-                </array>
-            </dict>
-            <key>Processor</key>
-            <string>PathDeleter</string>
         </dict>
     </array>
 </dict>

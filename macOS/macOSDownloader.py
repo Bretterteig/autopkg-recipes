@@ -1,29 +1,41 @@
 #!/usr/bin/env python
-# This processor uses the softwareupdate binary to query for new macOS builds, downloads them and provides the path to the app.
+# This processor uses the softwareupdate binary to query for new macOS builds.
 #
 # ATTENTION: This processor has requirements:
 #   * macOS Big Sur or higher (tested on Big Sur)
 
 from __future__ import absolute_import
 
-import os, subprocess, json, plistlib
+import os, subprocess, json, plistlib, shutil
 from distutils.version import LooseVersion
 
 from autopkglib import Processor, ProcessorError
 
-__all__ = ["DownloadMacOS"]
+__all__ = ["macOSDownloader"]
 
-class DownloadMacOS(Processor):
+class macOSDownloader(Processor):
     description = __doc__
 
-    input_variables = {}
+    input_variables = {
+        "version": {
+            "description": "Variables are provided by macOSReleaseProvider processor",
+            "required": True
+        },
+        "release": {
+            "description": "Variables are provided by macOSReleaseProvider processor",
+            "required": True
+        },
+        "size": {
+            "description": "Variables are provided by macOSReleaseProvider processor",
+            "required": True
+        },
+    }
 
     output_variables = {
-        "version": {"description": "Version of the macOS Installer"},
         "pathname": {"description": "Location of the installer"},
-        "release": {"description": "The name of the current OS"},
-        "size": {"description": "The size of the installer"},
-        "changed": {"description": "Describes wether or not a new version has been downloaded"}
+        "cache_dir": {"description": "The directory the installer is located in. Good for use with DMGCreator"},
+        "changed": {"description": "Describes wether or not a new version has been downloaded"},
+        "macOSDownloader_summary_result": {"description": "Outputs the result of the download process"},
     }
 
 
@@ -85,50 +97,16 @@ class DownloadMacOS(Processor):
                     self.unmount_dmg(mountpoint)
         return ''
 
-
-    # Software update functions
-    def get_update(self):
-        # Use softwareupdates list function to get all currently offered builds
-        try:
-            result = subprocess.run(['/usr/sbin/softwareupdate', '--list-full-installers'], stdout=subprocess.PIPE)
-        except Exception as err:
-            raise ProcessorError(err)
-
-        # Parse the text into a list of dicts
-        update_list = []
-        for line in result.stdout.decode().split('\n'):
-            if "Version" in line:
-                update_info = [s.split(':')[1].strip() for s in line.split(',')]
-                update_list.append({
-                    "name": update_info[0],
-                    "version": update_info[1],
-                    "size": (int(update_info[2].rstrip('K')) * 1000)
-                })
-
-        # Check if the list creation was successful
-        if not update_list:
-            raise ProcessorError("No updates have been found")
-
-        # Sort this list by the version key. Highest beeing the first item
-        update_list = sorted(update_list, key=lambda k: k['version'], reverse=True)
-        # Make the update known
-        update = update_list[0]
-
-        if self.env['verbose'] >= 2:
-            self.output("The following updates have been found: " + json.dumps(update_list, indent = 4))
-        self.output("Latest version found is {} {}".format(update['name'], update['version']))
-
-        return update
-
-    def download_macos(self, update):
+    # Softwareupdate functions
+    def download_macos(self):
         # Run download process
         try:
-            subprocess.run( ['/usr/sbin/softwareupdate', '--fetch-full-installer', '--full-installer-version', update['version']] )
+            subprocess.run( ['/usr/sbin/softwareupdate', '--fetch-full-installer', '--full-installer-version', self.env['version']] )
         except Exception as err:
             raise ProcessorError(err)
 
         # Check if we actually successfully downloaded something
-        installer = self.get_local_installer('/Applications', update['version'])
+        installer = self.get_local_installer('/Applications', self.env['version'])
         if not installer:
             raise ProcessorError("Download was not successful or cannot find downloaded item")
 
@@ -137,29 +115,45 @@ class DownloadMacOS(Processor):
 
     # Main
     def main(self):
-        # Get the list of installers from the softwareupdate binary
-        self.output("Querying software update for macOS installers")
-        update = self.get_update()
+        if not all (k in self.env for k in ('version', 'release', 'size')):
+            raise ProcessorError('Missing argument. Please make sure "macOSReleaseProvider" is run before this processor.')
+
+        cache_path = os.path.join(self.env['RECIPE_CACHE_DIR'], "downloads", self.env['version'])
+        installer_cache_path = os.path.join(cache_path, "Install {}.app".format(self.env['release']))
+        self.env["cache_dir"] = cache_path
+        self.env["pathname"] = installer_cache_path
+
+        # Check if dmg already in cache
+        self.env["changed"] = False
+        if os.path.exists(installer_cache_path):
+            self.output("Using chached version at {}".format(installer_cache_path))
+            return  
 
         # Check if application is already downloaded
-        self.output('Checking "/Applications" for the correct installer')
-        self.env["changed"] = False
-        installer = self.get_local_installer('/Applications', update['version'])
+        self.output('No cached installer found. Checking "/Applications" for the correct installer')
+        self.env["changed"] = True
+        installer = self.get_local_installer('/Applications', self.env['version'])
         if not installer:
-            self.env["changed"] = True
-            self.output("Downloading macOS {} {} (Size: {})".format(update['name'], update['version'], update['size']))
-            installer = self.download_macos(update)
+            self.output("Downloading macOS {} {} (Size: {})".format(self.env['release'], self.env['version'], self.env['size']))
+            installer = self.download_macos()
+            self.env['macOSDownloader_summary_result'] = {
+                "summary_text": "New version of macOS has been downloaded",
+                "data": {
+                    "release": self.env["release"],
+                    "version": self.env["version"],
+                    "download_path": self.env["pathname"]
+                }
+            }
         else:
             self.output("Version already on system at {}".format(installer))
 
+        # Copy installer into cache
+        self.output("Creating copy for cache")
+        os.makedirs(os.path.join(cache_path), exist_ok=True)
+        shutil.copytree(installer, installer_cache_path)
 
-        # Set env variables
-        self.env["pathname"] = installer
-        self.env["version"] = update['version']
-        self.env["release"] = update['name']
-        self.env["size"] = update['size']
 
 
 if __name__ == "__main__":
-    PROCESSOR = DownloadMacOS()
+    PROCESSOR = macOSDownloader()
     PROCESSOR.execute_shell()

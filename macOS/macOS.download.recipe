@@ -14,11 +14,15 @@
     <array>
         <dict>
             <key>Processor</key>
-            <string>com.trustedshops.DownloadMacOS/DownloadMacOS</string>
+            <string>com.trustedshops.macOS/macOSReleaseProvider</string>
         </dict>
         <dict>
             <key>Processor</key>
             <string>EndOfCheckPhase</string>
+        </dict>
+        <dict>
+            <key>Processor</key>
+            <string>com.trustedshops.macOS/macOSDownloader</string>
         </dict>
     </array>
 </dict>
