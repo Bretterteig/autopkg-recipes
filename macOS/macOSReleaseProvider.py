@@ -47,11 +47,11 @@ class macOSReleaseProvider(Processor):
 
         # Check if the list creation was successful
         if not update_list:
-            raise ProcessorError("No updates have been found")
+            raise ProcessorError("Could not receive or parse updates")
 
         # Sort this list by the version key. Highest beeing the first item
         update_list = sorted(update_list, key=lambda k: k['version'], reverse=True)
-        # Make the update known
+        # Select the one with the hightes version number
         update = update_list[0]
 
         if self.env['verbose'] >= 3:
