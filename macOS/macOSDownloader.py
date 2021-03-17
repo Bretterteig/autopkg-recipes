@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# This processor uses the softwareupdate binary to query for new macOS builds.
+# This processor uses the softwareupdate to download the macOS version determined by macOSReleaseProvider.
 # Some functions heavily burrow from munkitools code
 #
 # ATTENTION: This processor has requirements:
