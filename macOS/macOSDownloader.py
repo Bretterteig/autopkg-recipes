@@ -115,9 +115,6 @@ class macOSDownloader(Processor):
 
     # Main
     def main(self):
-        if not all (k in self.env for k in ('version', 'release', 'size')):
-            raise ProcessorError('Missing argument. Please make sure "macOSReleaseProvider" is run before this processor.')
-
         cache_path = os.path.join(self.env['RECIPE_CACHE_DIR'], "downloads", self.env['version'])
         installer_cache_path = os.path.join(cache_path, "Install {}.app".format(self.env['release']))
         self.env["cache_dir"] = cache_path
