@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # This processor uses the softwareupdate binary to query for new macOS builds.
+# Some functions heavily burrow from munkitools code
 #
 # ATTENTION: This processor has requirements:
 #   * macOS Big Sur or higher (tested on Big Sur)
@@ -63,8 +64,7 @@ class macOSDownloader(Processor):
         return output['mount-point']
 
     def unmount_dmg(self, path):
-        output = subprocess.check_output(['/usr/bin/hdiutil', 'detach', path, '-force'])
-        return output
+        return subprocess.check_output(['/usr/bin/hdiutil', 'detach', path, '-force'])
 
 
     # Installer app functions
@@ -115,6 +115,7 @@ class macOSDownloader(Processor):
 
     # Main
     def main(self):
+        # Define variables
         cache_path = os.path.join(self.env['RECIPE_CACHE_DIR'], "downloads", self.env['version'])
         installer_cache_path = os.path.join(cache_path, "Install {}.app".format(self.env['release']))
         self.env["cache_dir"] = cache_path
