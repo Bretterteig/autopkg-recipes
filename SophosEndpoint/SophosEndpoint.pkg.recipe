@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Description</key>
+    <string>Builds the latest version of Sophos Endpoint</string>
+    <key>Identifier</key>
+    <string>com.github.bretterteig.pkg.sophosendpointinstaller</string>
+    <key>Input</key>
+    <dict>
+        <key>NAME</key>
+        <string>SophosEndpoint</string>
+    </dict>
+    <key>MinimumVersion</key>
+    <string>1.0.0</string>
+    <key>ParentRecipe</key>
+    <string>com.github.bretterteig.download.sophosendpointinstaller</string>
+    <key>Process</key>
+    <array>
+        <dict>
+            <key>Processor</key>
+            <string>PkgRootCreator</string>
+            <key>Arguments</key>
+            <dict>
+                <key>pkgroot</key>
+                <string>%RECIPE_CACHE_DIR%/%NAME%/pkgroot</string>
+                <key>pkgdirs</key>
+				<dict/>
+            </dict>
+        </dict>
+        <dict>
+            <key>Processor</key>
+            <string>Unarchiver</string>
+            <key>Arguments</key>
+            <dict>
+                <key>destination_path</key>
+                <string>%RECIPE_CACHE_DIR%/%NAME%/script</string>
+                <key>purge_destination</key>
+                <true/>
+            </dict>
+        </dict>
+        <dict>
+            <key>Processor</key>
+            <string>Versioner</string>
+            <key>Arguments</key>
+            <dict>
+                <key>input_plist_path</key>
+                <string>%RECIPE_CACHE_DIR%/%NAME%/script/Sophos Installer.app/Contents/Info.plist</string>
+            </dict>
+        </dict>
+        <dict>
+            <key>Processor</key>
+            <string>FileCreator</string>
+            <key>Arguments</key>
+            <dict>
+                <key>file_content</key>
+                <string>#!/bin/zsh
+$(dirname $0)/Sophos\ Installer.app/Contents/MacOS/Sophos\ Installer --install</string>
+                <key>file_path</key>
+                <string>%RECIPE_CACHE_DIR%/%NAME%/script/postinstall</string>
+                <key>file_mode</key>
+                <string>0755</string>
+            </dict>
+        </dict>
+        <dict>
+            <key>Processor</key>
+            <string>PkgCreator</string>
+            <key>Arguments</key>
+            <dict>
+                <key>pkg_request</key>
+                <dict>
+                    <key>pkgname</key>
+                    <string>%NAME%-%version%</string>
+                    <key>version</key>
+                    <string>%version%</string>
+                    <key>id</key>
+                    <string>com.sophos.sophosendpointinstaller</string>
+                    <key>options</key>
+                    <string>purge_ds_store</string>
+                    <key>scripts</key>
+                    <string>%RECIPE_CACHE_DIR%/%NAME%/script</string>
+                </dict>
+            </dict>
+        </dict>
+    </array>
+</dict>
+</plist>
