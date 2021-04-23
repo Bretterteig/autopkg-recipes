@@ -5,7 +5,7 @@
     <key>Description</key>
     <string>Downloads the current release version of Sophos Endpoint</string>
     <key>Identifier</key>
-    <string>com.trustedshops.download.sophosendpointinstaller</string>
+    <string>com.github.bretterteig.download.sophosendpointinstaller</string>
     <key>Input</key>
     <dict>
         <key>NAME</key>
